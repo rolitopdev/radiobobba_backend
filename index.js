@@ -1,28 +1,55 @@
 // index.js
 const express = require('express');
+const sequelize = require('./config/database');
+const routes = require('./routes/routes');
+const cors = require('cors'); // Importar cors
+require('dotenv').config();
+
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
+
+// Definir los dominios permitidos
+const allowedOrigins = [
+  'https://radiobobba.com',
+  'https://*.radiobobba.com', // Permite todos los subdominios
+  'http://localhost:4200'
+];
+
+// Configuración de CORS
+app.use(cors({
+  origin: (origin, callback) => {
+    if (process.env.CLOUD === 'false') {
+      // Permitir cualquier origen si CLOUD es false
+      return callback(null, true);
+    } else {
+      // Validar el origen cuando CLOUD es true
+      const isAllowed = allowedOrigins.some(allowedOrigin =>
+        new RegExp(allowedOrigin.replace('*.', '.*')).test(origin)
+      );
+      if (isAllowed || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  }
+}))
 
 // Middleware para parsear JSON
 app.use(express.json());
 
-// Ruta de prueba
-app.get('/', (req, res) => {
-  res.send('¡Hola, esta es tu API en Node.js!');
-});
+// Rutas
+app.use('/api', routes);
 
-// Ejemplo de endpoint GET
-app.get('/api/usuarios', (req, res) => {
-  res.json([{ id: 1, nombre: 'Juan' }, { id: 2, nombre: 'María' }]);
-});
+// Sincronizar los modelos
+const syncDatabase = async () => {
+  await sequelize.sync({ alter: true }); // Modifica las tablas existentes según los modelos
+  console.log("[RADIOBOBBA_API]: Tablas sincronizadas");
+};
 
-// Ejemplo de endpoint POST
-app.post('/api/usuarios', (req, res) => {
-  const nuevoUsuario = req.body;
-  res.status(201).json({ mensaje: 'Usuario creado', usuario: nuevoUsuario });
-});
+syncDatabase().catch(error => console.error(error));
 
-// Servidor escuchando
+// Iniciar el servidor
 app.listen(port, () => {
-  console.log(`Servidor escuchando en http://localhost:${port}`);
+  console.log(`[RADIOBOBBA_API]: Server running on http://localhost:${port}`);
 });
