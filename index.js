@@ -3,6 +3,7 @@ const express = require('express');
 const sequelize = require('./config/database');
 const routes = require('./routes/routes');
 const cors = require('cors'); // Importar cors
+const rateLimit = require('express-rate-limit'); // Importar rateLimit
 require('dotenv').config();
 
 const app = express();
@@ -33,7 +34,19 @@ app.use(cors({
       }
     }
   }
-}))
+}));
+
+// Configuración del límite de peticiones
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Limitar a 100 solicitudes por IP cada 15 minutos
+  message: 'Demasiadas solicitudes desde esta IP, intente nuevamente más tarde.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Aplicar el limitador de tasa globalmente
+app.use(limiter);
 
 // Middleware para parsear JSON
 app.use(express.json());
