@@ -18,7 +18,7 @@ const allowedOrigins = [
 // Configuración de CORS
 app.use(cors({
   origin: (origin, callback) => {
-    if (process.env.CLOUD === 'false') {
+    if (process.env.CLOUD == "false") {
       // Permitir cualquier origen si CLOUD es false
       return callback(null, true);
     } else {
@@ -26,7 +26,7 @@ app.use(cors({
       const isAllowed = allowedOrigins.some(allowedOrigin =>
         new RegExp(allowedOrigin.replace('*.', '.*')).test(origin)
       );
-      if (isAllowed || !origin) {
+      if (isAllowed) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
