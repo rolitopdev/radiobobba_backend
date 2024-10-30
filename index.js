@@ -1,4 +1,3 @@
-// index.js
 const express = require('express');
 const sequelize = require('./config/database');
 const routes = require('./routes/routes');
@@ -12,8 +11,13 @@ const port = process.env.PORT || 3000;
 // Definir los dominios permitidos
 const allowedOrigins = [
   'https://radiobobba.com',
-  'https://*.radiobobba.com', // Permite todos los subdominios
   'http://localhost:4200'
+];
+
+const publicEndpoints = [
+  '/login',
+  '/register',
+  '/get-user-ip'
 ];
 
 // Configuración de CORS
@@ -45,6 +49,24 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Middleware de autorización JWT
+const verifyToken = (req, res, next) => {
+  console.log('req.path', req.path);
+  if (publicEndpoints.includes(req.path)) {
+    return next();
+  }
+
+  const token = req.headers['authorization'];
+  if (!token) return res.status(403).json({ message: 'No se proporcionó un token' });
+
+  const tokenWithoutBearer = token.replace("Bearer ", "");
+  jwt.verify(tokenWithoutBearer, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(401).json({ message: 'Token inválido o expirado' });
+    req.user = decoded;
+    next();
+  });
+};
+
 // Aplicar el limitador de tasa globalmente
 app.use(limiter);
 
@@ -52,7 +74,7 @@ app.use(limiter);
 app.use(express.json());
 
 // Rutas
-app.use('/api', routes);
+app.use('/api', verifyToken, routes);
 
 // Sincronizar los modelos
 const syncDatabase = async () => {

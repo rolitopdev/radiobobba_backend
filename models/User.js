@@ -2,6 +2,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const Role = require('./Role'); // Asegúrate de importar el modelo Role
+const UserRole = require('./UserRole'); // Importa el modelo UserRole
 
 const User = sequelize.define('User', {
   id: {
@@ -31,14 +32,6 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE,
     allowNull: false,
   },
-  role: {
-    type: DataTypes.INTEGER, // Cambia el tipo a INTEGER para relacionar con Role
-    allowNull: false,
-    references: {
-      model: Role,
-      key: 'id'
-    }
-  },
   location: {
     type: DataTypes.STRING,
     allowNull: true,
@@ -60,7 +53,8 @@ const User = sequelize.define('User', {
   timestamps: false,
 });
 
-// Establecer la relación
-User.belongsTo(Role, { foreignKey: 'role', targetKey: 'id' }); // Establece que User pertenece a Role
+// Establecer relaciones
+User.belongsToMany(Role, { through: UserRole, foreignKey: 'userId' });
+Role.belongsToMany(User, { through: UserRole, foreignKey: 'roleId' });
 
 module.exports = User;

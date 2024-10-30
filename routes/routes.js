@@ -6,7 +6,7 @@ const { loginUser, validateToken } = require('../controllers/loginController');
 
 const router = express.Router();
 
-router.post('/users', createUser);
+router.post('/register', createUser);
 router.post('/login', loginUser);
 router.post('/validate-token', validateToken);
 router.get('/get-user-ip', getIpUser);
